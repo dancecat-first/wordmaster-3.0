@@ -1095,8 +1095,8 @@ void Mandatory_testing_Page(struct word* words, const int line)
 		EndBatchDraw();
 
 
-		random = Generate_random_numbers(0, 2);
-		random = 3;
+		random = Generate_random_numbers(0, 3);
+
 		if (random == 0)
 		{
 			choiceQuestions(words, line, i, true);
@@ -1120,11 +1120,13 @@ bool choiceQuestions(struct word* words, int line, int questionNumber, bool Chin
 	time_t start;
 	BeginBatchDraw();
 	setfillcolor(RGB(10, 170, 170));
-	easySetTextStyle(30, BLACK, "微软雅黑");
+
 	solidroundrect(150, HIGH / 2 - 140, WIDTH - 200, HIGH / 2 - 100, 20, 20);
 
+	easySetTextStyle(25, BLACK, "得意黑");
 	outtextxy(WIDTH - 200 - textwidth("听写") - 10, HIGH / 2 - 140 + (40 / 2 - textheight("听写") / 2), "听写");
 
+	easySetTextStyle(30, BLACK, "微软雅黑");
 	if(Chinese)
 		outtextxy(160, HIGH / 2 - 140 + (40 / 2 - textheight(words[questionNumber].word) / 2), words[questionNumber].mean);
 	else
@@ -1143,9 +1145,9 @@ bool choiceQuestions(struct word* words, int line, int questionNumber, bool Chin
 		if (answerNumber == j)
 		{
 			if(Chinese)
-				initButtonXY(&selectButton[j], headBottom + j * 40, 150, (headBottom + 40) + j * 40, (int)((WIDTH - 300) * 0.7), (words + questionNumber)->word);
+				initButtonXY(&selectButton[j], headBottom + j * 40, 150, (headBottom + 40) + j * 40-2, (int)((WIDTH - 300) * 0.7), (words + questionNumber)->word);
 			else
-				initButtonXY(&selectButton[j], headBottom + j * 40, 150, (headBottom + 40) + j * 40, (int)((WIDTH - 300) * 0.7), (words + questionNumber)->mean);
+				initButtonXY(&selectButton[j], headBottom + j * 40, 150, (headBottom + 40) + j * 40-2, (int)((WIDTH - 300) * 0.7), (words + questionNumber)->mean);
 			createRoundrectButton(selectButton[j], 20, "微软雅黑", RGB(215, 255, 220), 25, 25);
 		}
 		else
@@ -1155,9 +1157,9 @@ bool choiceQuestions(struct word* words, int line, int questionNumber, bool Chin
 				randnum = Generate_random_numbers(0, line);
 			answersAppeared[j] = randnum;
 			if(Chinese)
-				initButtonXY(&selectButton[j], headBottom + j * 40, 150, (headBottom + 40) + j * 40, (int)((WIDTH - 300) * 0.7), (words + randnum)->word);
+				initButtonXY(&selectButton[j], headBottom + j * 40, 150, (headBottom + 40) + j * 40-2, (int)((WIDTH - 300) * 0.7), (words + randnum)->word);
 			else
-				initButtonXY(&selectButton[j], headBottom + j * 40, 150, (headBottom + 40) + j * 40, (int)((WIDTH - 300) * 0.7), (words + randnum)->mean);
+				initButtonXY(&selectButton[j], headBottom + j * 40, 150, (headBottom + 40) + j * 40-2, (int)((WIDTH - 300) * 0.7), (words + randnum)->mean);
 			createRoundrectButton(selectButton[j], 20, "微软雅黑", RGB(212, 255, 220), 25, 25);
 		}
 	}
@@ -1223,15 +1225,16 @@ bool dictation(struct word* words, int line, int questionNumber)
 	char timeout[20] = { 0 };
 	bool enter = false;
 	int jump = 0;
-	time_t start;
 
 	BeginBatchDraw();
 
 	setfillcolor(RGB(10, 170, 170));
-	easySetTextStyle(30, BLACK, "微软雅黑");
 	solidroundrect(150, HIGH / 2 - 140, WIDTH - 200, HIGH / 2 - 100, 20, 20);
 	
+	easySetTextStyle(25, BLACK, "得意黑");
 	outtextxy(WIDTH - 200 - textwidth("听写") - 10, HIGH / 2 - 140 + (40 / 2 - textheight("听写") / 2), "听写");
+	
+	easySetTextStyle(30, BLACK, "微软雅黑");
 	outtextxy(160, HIGH / 2 - 140 + (40 / 2 - textheight(words[questionNumber].word) / 2), words[questionNumber].mean);
 	
 	EndBatchDraw();
@@ -1240,33 +1243,17 @@ bool dictation(struct word* words, int line, int questionNumber)
 
 	CreateSRK(150, HIGH / 2 - 40, WIDTH - 300, HIGH / 2 + 0, 90, 45, "Enter", inputword);
 
-	//enter = txtPwd.OnMessage();
-	//if (enter == true)
-	//{
-	//	sprintf_s(inputword, 90, "%s", txtPwd.Text());
-	//	jump = 1;
-	//}
-	start = time(NULL);//获取时间
-	
+	enter = txtPwd.OnMessage();
+	if (enter == true)
+	{
+		sprintf_s(inputword, 90, "%s", txtPwd.Text());
+		jump = 1;
+	}
+
 	ExMessage msg;
 	while (jump == 0)
 	{
 		peekmessage(&msg);			// 获取消息输入
-
-		if (time(NULL) != start && 20 - (time(NULL) - start) >= 0)
-		{
-			easySetTextStyle(20, BLACK, "得意黑");
-			BeginBatchDraw();//避免闪屏
-			setfillcolor(RGB(245, 245, 245));
-			fillrectangle(200, HIGH - 200, 200 + textwidth(timeout), HIGH - 200 + textheight(timeout));
-			sprintf_s(timeout, sizeof(timeout), "请在%d秒内正确作答", (int)(20 - (time(NULL) - start)));
-			outtextxy(200, HIGH - 200, timeout);
-			EndBatchDraw();
-		}
-		else if (20 - (time(NULL) - start) < 0)
-		{
-			return false;
-		}
 
 		switch (msg.message)
 		{
