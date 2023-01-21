@@ -20,7 +20,7 @@ struct buttonXY
 	int top;
 	int right;
 	int bottom;
-	char* title;
+	const char* title;
 };
 
 int getLine(const char* name);//获取文件的行数
@@ -44,11 +44,11 @@ void createRoundrectButton(const struct buttonXY button, const int font_height, 
 //生成随机数
 int Generate_random_numbers(int range1, int range2);
 //初始化ButtonXY
-void initButtonXY(struct buttonXY *button, int top, int left, int bottom, int right, char* title);
+void initButtonXY(struct buttonXY *button, int top, int left, int bottom, int right, const char* title);
 bool cheekButton(struct buttonXY button, int mouseX, int mouseY);
 //选择题模块
 bool choiceQuestions(struct word* words, int line, int questionNumber, bool Chinese);
-
+//听写题模块
 bool dictation(struct word* words, int line, int questionNumber);
 
 void startPage(char* cTitle);//开始页面
@@ -272,39 +272,6 @@ void CreateSRK(int pwdx1, int pwdy1, int pwdx2, int pwdy2, int textmax,int btnwi
 
 	txtPwd.Create(pwdx1, pwdy1, pwdx2, pwdy2, textmax);						// 创建密码文本框控件
 	btnOK.Create(pwdx2, pwdy1, pwdx2+textwidth(title)+btnwidth, pwdy2, title);	// 创建按钮控件
-	/*bool enter=false;
-	enter = txtPwd.OnMessage();
-	if (enter == true)
-	{
-		sprintf_s(text,90, "%s", txtPwd.Text());
-		return;
-	}
-	ExMessage msg;
-	while (true)
-	{
-		peekmessage(&msg);			// 获取消息输入
-
-		switch (msg.message)
-		{
-		case WM_LBUTTONDOWN:
-			if (txtName.Check(msg.x, msg.y))	enter=txtName.OnMessage();
-
-			// 判断控件
-			if (txtPwd.Check(msg.x, msg.y))		enter=txtPwd.OnMessage();
-
-			// 判断控件
-			if (btnOK.Check(msg.x, msg.y) || enter == true)
-			{	
-				sprintf_s(text,90, "%s", txtPwd.Text());
-				return;
-			}
-			break;
-		case WM_LBUTTONUP:
-			break;
-		default:
-			break;
-		}
-	}*/
 
 }
 
@@ -316,19 +283,16 @@ int main()
 	initgraph(1024, 700);
 	setbkcolor(WHITE);//设置背景颜色
 	cleardevice();//清屏
-	
-
 
 	char	cNumUnit[20] = "Unit1";
-	//startPage(cNumUnit);
+	startPage(cNumUnit);
 
 	int line = 0;
 	line = getLine(cNumUnit);
 	static struct word* words = (struct word*)malloc(sizeof(struct word) * line);//等效替代了这句：struct word words[line];
 	getContents(cNumUnit, line, words);
 	downloadMusic(line, words);
-	Mandatory_testing_Page(words, line);
-	//Positive_memory_Page(words,line);
+	Positive_memory_Page(words,line);
 	getchar();
 	closegraph();
 	return 0;
@@ -346,7 +310,8 @@ void startPage(char* Title)
 		setbkcolor(RGB(245, 245, 245));//设置背景颜色
 		cleardevice();
 		BeginBatchDraw();//避免闪屏
-		
+		struct buttonXY startButton = { 400, 550, 624, 600, "开始学习" };
+		struct buttonXY selectBookButton[6];
 		{
 			setfillcolor(RGB(0, 140, 140));
 			easySetTextStyle(30, BLACK, "微软雅黑");
@@ -358,32 +323,27 @@ void startPage(char* Title)
 		{
 			setfillcolor(RGB(10, 170, 170));
 			solidroundrect(200, 200, 824, 650, 35, 35);
-			setfillcolor(RGB(50, 140, 140));
-			solidroundrect(400, 550, 624, 600, 35, 35);
-			easySetTextStyle(30, BLACK, "微软雅黑");
-			int wordwidth = 200 / 2 - textwidth("开始学习") / 2;
-			int wordheight = 50 / 2 - textheight("开始学习") / 2;
-			outtextxy(wordwidth + 415, wordheight + 550, "开始学习");
+			createRoundrectButton(startButton, 30, "微软雅黑", RGB(50, 140, 140), 35, 35);
 			EndBatchDraw();
+		}
+		for (int i = 0; i < 6; i++)
+		{
+			initButtonXY(&selectBookButton[i], 200 + i * 52,300, 250 + i * 52, 724,NULL);//初始化selectBookButton
 		}
 		if(numFile<=6)
 		{ 
 			for (int i = 0; i < numFile; i++)
 			{
-				solidroundrect(300, 200 + i * 52, 724, 250 + i * 52, 35, 35);
-				int wordwidth = 424 / 2 - textwidth(fileName[i]) / 2;
-				int wordheight = 50 / 2 - textheight(fileName[i]) / 2;
-				outtextxy(wordwidth + 300, wordheight + 200 + i * 52, fileName[i]);
+				selectBookButton[i].title = fileName[i];
+				createRoundrectButton(selectBookButton[i], 30, "微软雅黑", RGB(50, 140, 140), 35, 35);
 			}
 		}
 		else
 		{
 			for (int i = 0; i < 6; i++)
 			{
-				solidroundrect(300, 200 + i * 52, 724, 250 + i * 52, 35, 35);
-				int wordwidth = 424 / 2 - textwidth(fileName[i]) / 2;
-				int wordheight = 50 / 2 - textheight(fileName[i]) / 2;
-				outtextxy(wordwidth + 300, wordheight + 200 + i * 52, fileName[i]);
+				selectBookButton[i].title = fileName[i];
+				createRoundrectButton(selectBookButton[i], 30, "微软雅黑", RGB(50, 140, 140), 35, 35);
 			}
 		}
 		
@@ -396,53 +356,47 @@ void startPage(char* Title)
 				switch (msg.message)
 				{
 				case WM_LBUTTONDOWN/*鼠标左键被按下*/:
-					if (msg.x >= 400 && msg.x <= 624 && msg.y >= 550 && msg.y <= 600)
+					if (cheekButton(startButton,msg.x,msg.y))
 					{
-						setfillcolor(RGB(255, 200, 200));
-						solidroundrect(400, 550, 624, 600, 35, 35);
-						easySetTextStyle(30, BLACK, "微软雅黑");
-						int wordwidth = 200 / 2 - textwidth("开始学习") / 2;
-						int wordheight = 50 / 2 - textheight("开始学习") / 2;
-						outtextxy(wordwidth + 415, wordheight + 550, "开始学习");
-						//在此处写下按钮点击时要执行的函数，实现相应的功能
+						createRoundrectButton(startButton, 30, "微软雅黑", RGB(50, 120, 120), 35, 35);
 					}
 						
-					if (msg.x >= 300 && msg.x <= 724 && msg.y >= 200 && msg.y <= 250 && numFile >= 1)
+					if (cheekButton(selectBookButton[0], msg.x, msg.y) && numFile >= 1)
 					{
 						hadlePressDown(count, 0, fileName,0);
 						numPress = 0;
 					}
 					
 
-					if (msg.x >= 300 && msg.x <= 724 && msg.y >= 200 + 52 && msg.y <= 250 + 52 && numFile >= 2)
+					if (cheekButton(selectBookButton[1], msg.x, msg.y) && numFile >= 2)
 					{
 						hadlePressDown(count, 1, fileName,0);
 						numPress = 1;
 					}
 					
 
-					if (msg.x >= 300 && msg.x <= 724 && msg.y >= 200 + 52 * 2 && msg.y <= 250 + 52 * 2 && numFile >= 3)
+					if (cheekButton(selectBookButton[2], msg.x, msg.y) && numFile >= 3)
 					{
 						hadlePressDown(count, 2, fileName,0);
 						numPress = 2;
 					}
 					
 
-					if (msg.x >= 300 && msg.x <= 724 && msg.y >= 200 + 52 * 3 && msg.y <= 250 + 52 * 3 && numFile >= 4)
+					if (cheekButton(selectBookButton[3], msg.x, msg.y) && numFile >= 4)
 					{
 						hadlePressDown(count, 3, fileName,0);
 						numPress = 3;
 					}
 					
 
-					if (msg.x >= 300 && msg.x <= 724 && msg.y >= 200 + 52 * 4 && msg.y <= 250 + 52 * 4 && numFile >= 5)
+					if (cheekButton(selectBookButton[4], msg.x, msg.y) && numFile >= 5)
 					{
 						hadlePressDown(count, 4, fileName,0);
 						numPress = 4;
 					}
 					
 
-					if (msg.x >= 300 && msg.x <= 724 && msg.y >= 200 + 52 * 5 && msg.y <= 250 + 52 * 5 && numFile >= 6)
+					if (cheekButton(selectBookButton[5], msg.x, msg.y) && numFile >= 6)
 					{
 						hadlePressDown(count, 5, fileName,0);
 						numPress = 5;
@@ -451,7 +405,7 @@ void startPage(char* Title)
 
 					break;
 				case WM_LBUTTONUP:
-					if (msg.x >= 400 && msg.x <= 624 && msg.y >= 550 && msg.y <= 600)
+					if (cheekButton(startButton, msg.x, msg.y))
 					{
 						cleardevice();//清屏
 						if(strlen(numUnit)!=0)
@@ -460,12 +414,7 @@ void startPage(char* Title)
 					}
 					else
 					{
-						setfillcolor(RGB(255, 165, 165));
-						solidroundrect(400, 550, 624, 600, 35, 35);
-						easySetTextStyle(30, BLACK, "微软雅黑");
-						int wordwidth = 200 / 2 - textwidth("开始学习") / 2;
-						int wordheight = 50 / 2 - textheight("开始学习") / 2;
-						outtextxy(wordwidth + 415, wordheight + 550, "开始学习");
+						createRoundrectButton(startButton, 30, "微软雅黑", RGB(50, 140, 140), 35, 35);
 					}
 
 					if (msg.x >= 300 && msg.x <= 724 && msg.y >= 200 && msg.y <= 250 && numFile >= 1)
@@ -528,27 +477,22 @@ void startPage(char* Title)
 				case WM_MOUSEWHEEL:
 					if (msg.x >= 200 && msg.x <= 824 && msg.y >= 200 && msg.y <= 650 && numFile > 6)
 					{
-						int a = 0;
 						int wheel = msg.wheel/-120;//wheel是鼠标滚轮旋转的120倍
 						if (wheel>0)//当鼠标滚轮往下旋转时
 						{
 							if(count!=numFile-numFile%6)
 								count = count + 6;
-							setfillcolor(RGB(255, 165, 165));
-							easySetTextStyle(30, BLACK, "微软雅黑");
 							for (int i = 0; i < 6; i++)
 							{
-								solidroundrect(300, 200 + i * 52, 724, 250 + i * 52, 35, 35);
-								int wordwidth = 424 / 2 - textwidth(fileName[count+i]) / 2;
-								int wordheight = 50 / 2 - textheight(fileName[count+i]) / 2;
-								outtextxy(wordwidth + 300, wordheight + 200 + i * 52, fileName[count+i]);
+								selectBookButton[i].title = fileName[count+i];
+								createRoundrectButton(selectBookButton[i], 30, "微软雅黑", RGB(50, 140, 140), 35, 35);
 							}
 							if (count+6>=numFile)
 							{
-								setfillcolor(RGB(215, 126, 111));
 								for (int i = numFile-count; i < 6; i++)
 								{
-									solidroundrect(300, 200 + i * 52, 724, 250 + i * 52, 35, 35);
+									selectBookButton[i].title =NULL;
+									createRoundrectButton(selectBookButton[i], 30, "微软雅黑", RGB(10, 170, 170), 35, 35);
 								}
 							}
 						}
@@ -556,59 +500,44 @@ void startPage(char* Title)
 						{
 							if(count!=0)
 								count = count - 6;
-							setfillcolor(RGB(255, 165, 165));
-							easySetTextStyle(30, BLACK, "微软雅黑");
 							for (int i = 0; i < 6; i++)
 							{
-								solidroundrect(300, 200 + i * 52, 724, 250 + i * 52, 35, 35);
-								int wordwidth = 424 / 2 - textwidth(fileName[count + i]) / 2;
-								int wordheight = 50 / 2 - textheight(fileName[count + i]) / 2;
-								outtextxy(wordwidth + 300, wordheight + 200 + i * 52, fileName[count + i]);
+								selectBookButton[i].title = fileName[i];
+								createRoundrectButton(selectBookButton[i], 30, "微软雅黑", RGB(50, 140, 140), 35, 35);
 							}
 						}
 					}
 					break;
 
 				case WM_KEYUP/*判断键盘某个键被按下*/:
-						switch (msg.vkcode)
+					if (msg.vkcode == VK_DECIMAL)
+					{
+						if (count != numFile - numFile % 6)
+							count = count + 6;
+						for (int i = 0; i < 6; i++)
 						{
-						case VK_DOWN/*方向键下被按下*/:
-							if (count != numFile - numFile % 6)
-								count = count + 6;
-							setfillcolor(RGB(255, 165, 165));
-							easySetTextStyle(30, BLACK, "微软雅黑");
-							for (int i = 0; i < 6; i++)
+							selectBookButton[i].title = fileName[count + i];
+							createRoundrectButton(selectBookButton[i], 30, "微软雅黑", RGB(50, 140, 140), 35, 35);
+						}
+						if (count + 6 >= numFile)
+						{
+							for (int i = numFile - count; i < 6; i++)
 							{
-								solidroundrect(300, 200 + i * 52, 724, 250 + i * 52, 35, 35);
-								int wordwidth = 424 / 2 - textwidth(fileName[count + i]) / 2;
-								int wordheight = 50 / 2 - textheight(fileName[count + i]) / 2;
-								outtextxy(wordwidth + 300, wordheight + 200 + i * 52, fileName[count + i]);
+								selectBookButton[i].title = NULL;
+								createRoundrectButton(selectBookButton[i], 30, "微软雅黑", RGB(10, 170, 170), 35, 35);
 							}
-							if (count + 6 >= numFile)
-							{
-								setfillcolor(RGB(215, 126, 111));
-								for (int i = numFile - count; i < 6; i++)
-								{
-									solidroundrect(300, 200 + i * 52, 724, 250 + i * 52, 35, 35);
-								}
-							}
-							break;
-
-						case VK_UP/*方向键上被按下*/:
-							if (count != 0)
-								count = count - 6;
-							setfillcolor(RGB(255, 165, 165));
-							easySetTextStyle(30, BLACK, "微软雅黑");
-							for (int i = 0; i < 6; i++)
-							{
-								solidroundrect(300, 200 + i * 52, 724, 250 + i * 52, 35, 35);
-								int wordwidth = 424 / 2 - textwidth(fileName[count + i]) / 2;
-								int wordheight = 50 / 2 - textheight(fileName[count + i]) / 2;
-								outtextxy(wordwidth + 300, wordheight + 200 + i * 52, fileName[count + i]);
-							}
-							break;
-						default:
-							break;
+						}
+					}
+					
+					if (msg.vkcode == VK_UP)
+					{
+						if (count != 0)
+							count = count - 6;
+						for (int i = 0; i < 6; i++)
+						{
+							selectBookButton[i].title = fileName[i];
+							createRoundrectButton(selectBookButton[i], 30, "微软雅黑", RGB(50, 140, 140), 35, 35);
+						}
 					}
 					break;
 
@@ -624,9 +553,9 @@ void Positive_memory_Page(struct word *words,const int line)
 {
 	int jump = 0;//用于判断是否跳出while消息循环
 	int Face = 0;
-	int WhetherTimeOut = 0;
+	bool WhetherTimeOut = true;
 	int count = 1;
-	IMAGE voice,voice_1,face,face_1,Ture,False,answer_next;
+	IMAGE voice,voice_1,face,face_1,True,False,answer_next;
 	char progress[20] = { 0 };
 	char timeout[20] = { 0 };
 	time_t start;
@@ -660,7 +589,7 @@ void Positive_memory_Page(struct word *words,const int line)
 			loadimage(&voice_1, "Image\\voice_1.png", 20, 20);
 			loadimage(&face, "Image\\face.png", 50, 50);
 			loadimage(&face_1, "Image\\face_1.png", 50, 50);
-			loadimage(&Ture, "Image\\ture.png", 50, 50);
+			loadimage(&True, "Image\\ture.png", 50, 50);
 			loadimage(&False, "Image\\false.png", 50, 50);
 			loadimage(&answer_next, "Image\\answer_next.png", 50, 50);
 
@@ -701,7 +630,7 @@ void Positive_memory_Page(struct word *words,const int line)
 			ExMessage msg;
 			while (jump==0)
 			{
-				if (time(NULL) != start && 6 - (time(NULL) - start) >= 0 && WhetherTimeOut == 0)
+				if (time(NULL) != start && 6 - (time(NULL) - start) >= 0 && WhetherTimeOut == true)
 				{
 					easySetTextStyle(20, BLACK, "得意黑");
 					BeginBatchDraw();//避免闪屏
@@ -734,10 +663,10 @@ void Positive_memory_Page(struct word *words,const int line)
 								fillrectangle(200, HIGH / 2 - 100, 200 + textwidth(timeout), HIGH / 2 - 100 + textheight(timeout));
 								easySetTextStyle(25, BLACK, "微软雅黑");
 								outtextxy(200, (HIGH - 100 - 100) / 2, words[i].mean);
-								putimage(WIDTH / 2 + 100, (HIGH - 100 - 100) / 2, &Ture);
+								putimage(WIDTH / 2 + 100, (HIGH - 100 - 100) / 2, &True);
 								putimage(WIDTH / 2 + 100, (HIGH - 100 - 100) / 2 + 70, &False);
 								Face = 1;
-								WhetherTimeOut = 1;
+								WhetherTimeOut = false;
 							}
 							else
 							{
@@ -754,7 +683,7 @@ void Positive_memory_Page(struct word *words,const int line)
 								fillrectangle(WIDTH / 2 + 100, (HIGH - 100 - 100) / 2, WIDTH - 350, HIGH - 330);
 								putimage(WIDTH / 2 + 100, (HIGH - 100 - 100) / 2 + 35, &answer_next);
 								Face = 2;
-								WhetherTimeOut = 1;
+								WhetherTimeOut = false;
 							}
 							else
 							{
@@ -803,8 +732,9 @@ void Positive_memory_Page(struct word *words,const int line)
 				transition(Intensive_review);
 				Intensive_review_Page(i - 9, i, words);
 			}
-	
 	}
+	transition("强制测试");
+	Mandatory_testing_Page(words, line);
 }
 
 void Reverse_memory_Page(const int index,const int index_max,struct word* words)
@@ -1075,6 +1005,8 @@ void Mandatory_testing_Page(struct word* words, const int line)
 	char progress[20] = { 0 };
 	IMAGE voice, voice_1;
 	int correctNumber = 0;
+	char fraction[50] = { 0 };
+
 	for (int i = 0; i < line; i++)
 	{
 		BeginBatchDraw();
@@ -1099,17 +1031,24 @@ void Mandatory_testing_Page(struct word* words, const int line)
 
 		if (random == 0)
 		{
-			choiceQuestions(words, line, i, true);
+			if (choiceQuestions(words, line, i, true))
+				correctNumber++;
 		}
 		else if (random == 1)
 		{
-			choiceQuestions(words, line, i, false);
+			if (choiceQuestions(words, line, i, false))
+				correctNumber++;
 		}
 		else
 		{
-			dictation(words, line, i);
+			if (dictation(words, line, i))
+				correctNumber++;
 		}
 	}
+	cleardevice();
+	sprintf(fraction, "你的分数是%f", 100.0 / line * correctNumber);
+
+	outtextxy(WIDTH / 2-textwidth(fraction)/2, HIGH / 2-textheight(fraction)/2, fraction);
 
 	return;
 }
@@ -1281,7 +1220,7 @@ bool dictation(struct word* words, int line, int questionNumber)
 	else
 		return true;
 }
-void initButtonXY(struct buttonXY *button, int top, int left, int bottom, int right, char* title)
+void initButtonXY(struct buttonXY *button, int top, int left, int bottom, int right, const char* title)
 {
 	(*button).top = top;
 	(*button).left = left;
@@ -1595,8 +1534,9 @@ void createRoundrectButton(const struct buttonXY button,const int font_height,co
 	setbkcolor(RGB(245, 245, 245));				// 设置背景颜色
 	setfillcolor(fillcolor);			// 设置填充颜色
 	easySetTextStyle(font_height, BLACK, font);
-	fillroundrect(button.left, button.top, button.right, button.bottom, ellipsewidth, ellipseheight);
-	outtextxy(button.left + (button.right - button.left - textwidth(button.title) + 1) / 2, button.top + (button.bottom - button.top - textheight(button.title) + 1) / 2, button.title);
+	solidroundrect(button.left, button.top, button.right, button.bottom, ellipsewidth, ellipseheight);
+	if(button.title!=NULL)
+		outtextxy(button.left + (button.right - button.left - textwidth(button.title) + 1) / 2, button.top + (button.bottom - button.top - textheight(button.title) + 1) / 2, button.title);
 
 	setlinecolor(oldlinecolor);
 	setbkcolor(oldbkcolor);
