@@ -71,7 +71,7 @@ bool cheekButton(struct buttonXY button, int mouseX, int mouseY);
 struct ChoiceQuestionsWrongTopic* choiceQuestions(struct word* words, int line, int questionNumber, bool Chinese);
 //听写题模块
 struct dictationWrongTopic* dictation(struct word* words, int line, int questionNumber);
-void ShowWrongQuestion(struct WrongTopic** Topic, int line);
+void ShowWrongQuestion(struct WrongTopic Topic[], int line);
 
 void startPage(char* cTitle);//开始页面
 void Positive_memory_Page(struct word* words,const int line);//正向记忆
@@ -392,22 +392,15 @@ int main()
 	setbkcolor(RGB(0, 50, 50));//设置背景颜色
 	cleardevice();
 
-	setfillcolor(RGB(245, 245, 245));//设置填充颜色
-	solidroundrect(100, 100, WIDTH - 100, HIGH - 100, 35, 35);//画一个圆角矩形
-
-	struct dictationWrongTopic WrongTopic = { "hello","hi","no" };
-	struct WrongTopic hi = { false,NULL,&WrongTopic };
-	struct WrongTopic* h = &hi;
-//	hello.CreateWorngQuestionBox(&WrongTopic, 150, 200, 500, 400);
-	ShowWrongQuestion((& h), 1);
-	//char	cNumUnit[20] = "Unit1";
+	char	cNumUnit[20] = "Unit1";
 	//startPage(cNumUnit);
 
-	//int line = 0;
-	//line = getLine(cNumUnit);
-	//static struct word* words = (struct word*)malloc(sizeof(struct word) * line);//等效替代了这句：struct word words[line];
-	//getContents(cNumUnit, line, words);
-	//downloadMusic(line, words);
+	int line = 0;
+	line = getLine(cNumUnit);
+	static struct word* words = (struct word*)malloc(sizeof(struct word) * line);//等效替代了这句：struct word words[line];
+	getContents(cNumUnit, line, words);
+	downloadMusic(line, words);
+	Mandatory_testing_Page(words, line);
 	//Positive_memory_Page(words,line);
 	getchar();
 	closegraph();
@@ -1078,10 +1071,13 @@ void Mandatory_testing_Page(struct word* words, const int line)
 		solidroundrect(100, 100, WIDTH - 100, HIGH - 100, 35, 35);//画一个圆角矩形
 
 		setfillcolor(RGB(222, 224, 225));
+
+		setfillcolor(RGB(222, 224, 225));
 		solidrectangle(120, HIGH - 220, WIDTH - 120, HIGH - 218);
 		sprintf_s(progress, sizeof(progress), "%d/%d", i + 1, line);
 		easySetTextStyle(20, BLACK, "得意黑");
 		outtextxy(WIDTH - 200, HIGH - 200, progress);
+
 
 		loadimage(&voice, "Image\\voice.png", 20, 20);
 		loadimage(&voice_1, "Image\\voice_1.png", 20, 20);
@@ -1089,20 +1085,18 @@ void Mandatory_testing_Page(struct word* words, const int line)
 
 
 		random = Generate_random_numbers(0, 3);
-
-		//struct ChoiceQuestionsWrongTopic** wrongTopic = (struct ChoiceQuestionsWrongTopic**)malloc(sizeof(struct ChoiceQuestionsWrongTopic*) * line);
 		if (random == 0)
 		{
 			wrongTopic[i].choice = true;
 			wrongTopic[i].ChoiceWrong = choiceQuestions(words, line, i, true);
-			if (wrongTopic==NULL)
+			if (wrongTopic[i].ChoiceWrong == NULL)
 				correctNumber++;
 		}
 		else if (random == 1)
 		{
 			wrongTopic[i].choice = true;
 			wrongTopic[i].ChoiceWrong = choiceQuestions(words, line, i, false);
-			if (wrongTopic == NULL)
+			if (wrongTopic[i].ChoiceWrong == NULL)
 				correctNumber++;
 		}
 		else
@@ -1114,38 +1108,137 @@ void Mandatory_testing_Page(struct word* words, const int line)
 		}
 	}
 	cleardevice();
-	sprintf(fraction, "你的分数是%f", 100.0 / line * correctNumber);
 
-	outtextxy(WIDTH / 2-textwidth(fraction)/2, HIGH / 2-textheight(fraction)/2, fraction);
+	char cOUTPUT[40] = { 0 };
+	struct buttonXY yes;
+	struct buttonXY exit;
+	setbkcolor(RGB(0, 50, 50));//设置背景颜色
+	cleardevice();
+	BeginBatchDraw();
+	setfillcolor(RGB(245, 245, 245));//设置填充颜色
+	solidroundrect(100, 100, WIDTH - 100, HIGH - 100, 35, 35);//画一个圆角矩形
+	setfillcolor(RGB(100, 170, 170));//设置填充颜色
+	solidroundrect(WIDTH / 2 - 210, HIGH / 2 - 80, WIDTH / 2 + 190, HIGH / 2 + 60, 20, 20);
+
+	setfillcolor(RGB(160, 202, 202));//设置填充颜色
+	solidroundrect(WIDTH / 2 - 200, HIGH / 2 - 70, WIDTH / 2 + 200, HIGH / 2 + 70, 20, 20);
+
+	easySetTextStyle(25, BLACK, "得意黑");
+	outtextxy(WIDTH / 2 - 190, HIGH / 2 - 65, "提示");
+
+	easySetTextStyle(15, BLACK, "得意黑");
+	sprintf_s(cOUTPUT, sizeof(cOUTPUT), "测试完成，你的分数是%f", 100.0 / line * correctNumber);
+	outtextxy(WIDTH / 2 - 190, HIGH / 2 - 25, cOUTPUT);
+
+	initButtonXY(&yes, HIGH / 2 + 10, WIDTH / 2 + 80, HIGH / 2 + 50, WIDTH / 2 + 180, "查看错题");
+	initButtonXY(&exit, HIGH / 2 + 10, WIDTH / 2 - 80, HIGH / 2 + 50, WIDTH / 2 - 180, "退出");
+	createRoundrectButton(yes, 20, "微软雅黑", RGB(50, 150, 150), 15, 15);
+	createRoundrectButton(exit, 20, "微软雅黑", RGB(50, 150, 150), 15, 15);
+	EndBatchDraw();
+
+	ExMessage msg;
+	while (true)
+	{
+		if (peekmessage(&msg)) {
+
+			switch (msg.message)
+			{
+			case WM_LBUTTONDOWN:
+				if (cheekButton(yes,msg.x,msg.y))
+				{
+					createRoundrectButton(yes, 20, "微软雅黑", RGB(100, 170, 170), 15, 15);
+				}
+				break;
+			case WM_LBUTTONUP:
+				if (cheekButton(yes, msg.x, msg.y))
+				{
+					cleardevice();//清屏
+					goto EXIT;
+				}
+				else
+				{
+					createRoundrectButton(yes, 20, "微软雅黑", RGB(50, 150, 150), 15, 15);
+				}
+				break;
+			default:
+				break;
+
+			}
+
+		}
+
+	}
+EXIT:
+	ShowWrongQuestion(wrongTopic, line);
 	free(wrongTopic);
 	return;
 }
 
-void ShowWrongQuestion(struct WrongTopic** Topic,int line)
+void ShowWrongQuestion(struct WrongTopic Topic[], int line)
 {
 	WrongQuestionBox wrong;
+	IMAGE nextRight, nextLeft;
+	char progress[20] = { 0 };
+	bool jump = true;
+	int count = 0; 
+	int wrong_num=0;
+	loadimage(&nextRight, "Image\\nextright.png", 50, 50);
+	loadimage(&nextLeft, "Image\\nextleft.png", 50, 50);
+
 	BeginBatchDraw();
 	setbkcolor(RGB(0, 50, 50));//设置背景颜色
 	cleardevice();
 
 	setfillcolor(RGB(245, 245, 245));//设置填充颜色
 	solidroundrect(100, 100, WIDTH - 100, HIGH - 100, 35, 35);//画一个圆角矩形
+	solidrectangle(120, HIGH - 220, WIDTH - 120, HIGH - 218);
 	easySetTextStyle(40, BLACK, "微软雅黑");
 	outtextxy(WIDTH / 2-textwidth("查看错题")/2, 120, "查看错题");
+	putimage(WIDTH / 2 - 350, HIGH / 2 - 30, &nextLeft);
+	putimage(WIDTH / 2 + 300, HIGH / 2 - 30, &nextRight);
+	
+	setfillcolor(RGB(222, 224, 225));
+	solidrectangle(120, HIGH - 220, WIDTH - 120, HIGH - 218);
 	EndBatchDraw();
+	for (int i = 0; i < line; i++)
+	{
+		wrong_num++;
+	}
+
+
 
 	for (int i = 0; i < line; i++)
 	{
-		if (Topic[i] != NULL)
+		jump = true;
+		if (Topic[i].ChoiceWrong!=NULL|| Topic[i].DictationWrong != NULL)
 		{
-			if(Topic[i]->choice==true)
-				wrong.CreateWorngQuestionBox(Topic[i]->ChoiceWrong, WIDTH / 2 - 100, HIGH / 2 - 100, WIDTH / 2 + 100, HIGH / 2 + 100);
+			count = i;	sprintf_s(progress, sizeof(progress), "%d/%d", i+1, wrong_num);
+			easySetTextStyle(20, BLACK, "得意黑");
+			outtextxy(WIDTH - 200, HIGH - 200, progress);
+			if(Topic[i].choice==true)
+				wrong.CreateWorngQuestionBox(Topic[i].ChoiceWrong, WIDTH / 2 - 200, HIGH / 2 - 100, WIDTH / 2 + 200, HIGH / 2 + 100);
 			else
-				wrong.CreateWorngQuestionBox(Topic[i]->DictationWrong, WIDTH / 2 - 200, HIGH / 2 - 100, WIDTH / 2 + 200, HIGH / 2 + 100);
+				wrong.CreateWorngQuestionBox(Topic[i].DictationWrong, WIDTH / 2 - 200, HIGH / 2 - 100, WIDTH / 2 + 200, HIGH / 2 + 100);
 
-			while (true)
+			ExMessage msg;
+			while (jump)
 			{
-
+				if (peekmessage(&msg)) {
+					switch (msg.message)
+					{
+					case WM_LBUTTONDOWN:
+						if (msg.x >= WIDTH / 2 - 350 && msg.x <= WIDTH / 2 - 350 + 50 && msg.y >= HIGH / 2 - 30 && msg.y <= HIGH / 2 - 30 + 50)
+						{
+							i = count-1;
+							jump = false;
+						}
+						if (msg.x >= WIDTH / 2 + 300 && msg.x <= WIDTH / 2 + 300 + 50 && msg.y >= HIGH / 2 - 30 && msg.y <= HIGH / 2 - 30 + 50)
+						{
+							jump = false;
+						}
+						break;
+					}
+				}
 			}
 			
 		}
@@ -1165,7 +1258,7 @@ struct ChoiceQuestionsWrongTopic* choiceQuestions(struct word* words, int line, 
 	easySetTextStyle(25, BLACK, "得意黑");
 	outtextxy(WIDTH - 200 - textwidth("听写") - 10, HIGH / 2 - 140 + (40 / 2 - textheight("听写") / 2), "听写");
 
-	easySetTextStyle(30, BLACK, "微软雅黑");
+	easySetTextStyle(25, BLACK, "微软雅黑");
 	if (Chinese)
 	{
 		outtextxy(160, HIGH / 2 - 140 + (40 / 2 - textheight(words[questionNumber].word) / 2), words[questionNumber].mean);
@@ -1274,10 +1367,10 @@ struct dictationWrongTopic* dictation(struct word* words, int line, int question
 	setfillcolor(RGB(10, 170, 170));
 	solidroundrect(150, HIGH / 2 - 140, WIDTH - 200, HIGH / 2 - 100, 20, 20);
 	
-	easySetTextStyle(25, BLACK, "得意黑");
+	easySetTextStyle(20, BLACK, "得意黑");
 	outtextxy(WIDTH - 200 - textwidth("听写") - 10, HIGH / 2 - 140 + (40 / 2 - textheight("听写") / 2), "听写");
 	
-	easySetTextStyle(30, BLACK, "微软雅黑");
+	easySetTextStyle(25, BLACK, "微软雅黑");
 	outtextxy(160, HIGH / 2 - 140 + (40 / 2 - textheight(words[questionNumber].mean) / 2), words[questionNumber].mean);
 	sprintf(wrongTopic->dictationMean, "%s", words[questionNumber].mean);
 	sprintf(wrongTopic->dictationRightWord, "%s", words[questionNumber].word);
